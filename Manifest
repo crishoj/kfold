@@ -1,0 +1,11 @@
+CHANGELOG
+LICENSE
+Manifest
+README
+Rakefile
+bin/kfold
+lib/kfold.rb
+lib/kfold/data_file.rb
+spec/helper.rb
+spec/kfold/data_file_spec.rb
+spec/kfold/sample_data_file.conll
