@@ -1,29 +1,14 @@
-== Overview
+= kfold
 
 kfold creates K-fold splits from data files and assists in training and testing (useful for cross-validation in supervised machine
 learning)
 
-  COMMANDS:
-		
+== Command overview
+
     help                 Display global or [command] help documentation.		
     split                Split a data file into K partitions		
     test                 Apply trained models on a dataset previously split using kfold		
     train                Train models on a dataset previously split using kfold	
-
-  ALIASES:
-  
-    fold                 split --fold  
-
-  GLOBAL OPTIONS:
-	
-    -h, --help 
-        Display help documentation
-	
-    -v, --version 
-        Display version information
-	
-    -t, --trace 
-        Display backtrace when an error occurs
 
 == Example usage
 
@@ -34,7 +19,7 @@ learning)
   kfold test -f --base shuffled.c32.conll -- java -jar ~/Tools/malt-1.4.1/malt.jar -c %B.model_%N -i %T -o %O -m parse
   eval07.pl -q -g shuffled.c32.conll -s shuffled.c32.conll.output
   
-The MaltParser does not like to put its models in a subdirectory, so instead rather using the standard model files suggested by kfold (%M), we construct custom non-nested model filenames using %B.model_%N.
+The MaltParser does not like to put its models in a subdirectory, so rather than using the standard model files suggested by kfold (%M), we construct custom non-nested model filenames using %B.model_%N.
 
 == Command details
 
