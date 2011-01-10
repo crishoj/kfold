@@ -4,6 +4,7 @@ Manifest
 README
 Rakefile
 bin/kfold
+kfold.gemspec
 lib/kfold.rb
 lib/kfold/data_file.rb
 spec/helper.rb
