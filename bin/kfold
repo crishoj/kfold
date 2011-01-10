@@ -35,7 +35,7 @@ command :split do |c|
   c.option '--parts-name STRING', String, 'Use the given name as suffix for the partitions folder created'
   c.option '--folds-name STRING', String, 'Use the given name as suffix for the folds folder created'
   c.action do |args, options|
-    options.default :parts => 10, :delimiter => "\n", :granularity => 1, :parts_name => 'parts'
+    options.default :parts => 10, :delimiter => "\n", :granularity => 1, :parts_name => 'test', :folds_name => 'train'
     abort "Failed: Please specify input file using -i INPUT" unless options.input 
     abort "Failed: Input file #{options.input} does not exist" unless File.exist? options.input
     # Interpret newlines, linefeeds and tabs
@@ -87,25 +87,89 @@ end
 
 alias_command :fold, :split, '--fold'
 
-#command :train do |c|
-#  c.syntax = 'kfold train [options]'
-#  c.summary = ''
-#  c.description = ''
-#  c.example 'description', 'command example'
-#  c.option '--some-switch', 'Some switch that does something'
-#  c.action do |args, options|
-#    # Do something or c.when_called Kfold::Commands::Train
-#  end
-#end
-#
-#command :test do |c|
-#  c.syntax = 'kfold test [options]'
-#  c.summary = ''
-#  c.description = ''
-#  c.example 'description', 'command example'
-#  c.option '--some-switch', 'Some switch that does something'
-#  c.action do |args, options|
-#    # Do something or c.when_called Kfold::Commands::Test
-#  end
-#end
+command :train do |c|
+  c.syntax = 'kfold train --base NAME [options] -- CMD [--CMD-OPTIONS] [CMD-ARGS]'
+  c.summary = 'Train models on a dataset previously split using kfold'
+  c.description = <<-end
+Given training data previously split in K parts and folds, train K models on the K folds
+    
+    Certain keywords in the training command and its arguments are interpolated at runtime:
 
+     * %N  - fold number, e.g. '01'
+     * %F  - fold filename, e.g. 'brown.train/01'
+     * %I  - alias for %F
+     * %M  - model filename, e.g. 'brown.models/01'
+     * %B  - basename (as specified on the command line), e.g. 'brown'
+  end
+  c.option '-f', '--overwrite', 'Remove existing models prior to executing'
+  c.option '--base NAME', String, 'Default prefix of training folds and model files'
+  c.option '--folds-name SUFFIX', String, 'Look for folds {01..K} in the folder BASE.SUFFIX'
+  c.option '--models-name SUFFIX', String, 'Yield model names as BASE.SUFFIX/{01..K} as interpolation pattern %M'
+  c.action do |args, options|
+    options.default :folds_name => 'train', :models_name => 'models'
+    raise "Must specify base name using --base" unless options.base
+    folds_dir = "#{options.base}.#{options.folds_name}"
+    models_dir = "#{options.base}.#{options.models_name}"
+    raise "Folds directory not found" unless File.exists?(folds_dir)
+    folds = Dir.glob(File.join(folds_dir, '*')).collect { |file|
+      file if File.basename(file) =~ /^[0-9]+$/
+    }.compact
+    raise "No folds found in #{folds_dir}" if folds.count == 0
+    say "Found #{folds.count} folds in #{folds_dir}"
+    cmds = folds.collect do |fold|
+      num = File.basename(fold)
+      model = File.join(models_dir, num)
+      args.collect { |arg|
+        arg.gsub(/%F/, fold).gsub(/%T/, fold).gsub(/%N/, num).gsub('%M', model).gsub('%B', options.base)
+      }.join(' ')
+    end
+    do_directory(models_dir, options.overwrite) if cmds.first.match(models_dir)
+    cmds.each do |cmd|
+      say "[exec] #{cmd}"
+      system cmd
+    end
+  end
+end
+
+command :test do |c|
+  c.syntax = 'kfold test --base NAME [options] -- CMD [--CMD-OPTIONS] [CMD-ARGS]'
+  c.summary = 'Apply trained models on a dataset previously split using kfold'
+  c.option '-f', '--overwrite', 'Remove existing test output prior to executing'
+  c.option '--base NAME', String, 'Default prefix of model files and test outputs'
+  c.option '--parts-name SUFFIX', String, 'Look for parts {01..K} to be processed in the folder BASE.SUFFIX'
+  c.option '--models-name SUFFIX', String, 'Yield model names as BASE.SUFFIX/{01..K} as interpolation pattern %M'
+  c.option '--outputs-name SUFFIX', String, 'Yield output filenames as BASE.SUFFIX/{01..K} as interpolation pattern %O'
+  c.option '--output-name SUFFIX', String, 'Put the concatenated output of all models in BASE.SUFFIX'
+  c.action do |args, options|
+    options.default :parts_name => 'test', :models_name => 'models', :outputs_name => 'outputs', :output_name => 'output'
+    raise "Must specify base name using --base" unless options.base
+    parts_dir = "#{options.base}.#{options.parts_name}"
+    models_dir = "#{options.base}.#{options.models_name}"
+    output_dir = "#{options.base}.#{options.outputs_name}"
+    output_file = "#{options.base}.#{options.output_name}"
+    raise "Parts directory not found" unless File.exists?(parts_dir)
+    raise "Model directory not found" unless File.exists?(models_dir)
+    parts = Dir.glob(File.join(parts_dir, '*')).collect { |file|
+      file if File.basename(file) =~ /^[0-9]+$/
+    }.compact
+    raise "No parts found in #{parts_dir}" if parts.count == 0
+    say "Found #{parts.count} parts in #{parts_dir}"
+    outputs = []
+    cmds = parts.collect do |part|
+      num = File.basename(part)
+      model = File.join(models_dir, num)
+      output = File.join(output_dir, num)
+      outputs << output
+      args.collect { |arg|
+        arg.gsub(/%O/, output).gsub(/%I/, part).gsub(/%T/, part).gsub(/%N/, num).gsub('%M', model).gsub('%B', options.base)
+      }.join(' ')
+    end
+    do_directory(output_dir, options.overwrite)
+    cmds.each do |cmd|
+      say "[exec] #{cmd}"
+      system cmd
+    end
+    say "[join] #{outputs.join(' ')} => #{output_file}"
+    system "cat #{outputs.join(' ')} > #{output_file}"
+  end  
+end
