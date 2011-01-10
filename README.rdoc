@@ -1,12 +1,6 @@
 == Overview
 
-  NAME:
-
-    kfold
-
-  DESCRIPTION:
-
-    Create K-fold splits from data files and assist in training and testing (useful for cross-validation in supervised machine
+kfold creates K-fold splits from data files and assists in training and testing (useful for cross-validation in supervised machine
 learning)
 
   COMMANDS:
