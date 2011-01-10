@@ -1,3 +1,172 @@
 == kfold
 
-You should document your project here.
+  NAME:
+
+    kfold
+
+  DESCRIPTION:
+
+    ["Create K-fold splits from data files and assist in training and testing (useful for cross-validation in supervised machine
+learning)"]
+
+  COMMANDS:
+		
+    help                 Display global or [command] help documentation.		
+    split                Split a data file into K partitions		
+    test                 Apply trained models on a dataset previously split using kfold		
+    train                Train models on a dataset previously split using kfold	
+
+  ALIASES:
+  
+    fold                 split --fold  
+
+  GLOBAL OPTIONS:
+	
+    -h, --help 
+        Display help documentation
+	
+    -v, --version 
+        Display version information
+	
+    -t, --trace 
+        Display backtrace when an error occurs
+
+=== Splitting data files
+
+  NAME:
+
+    split
+
+  DESCRIPTION:
+
+    Given the data file INPUT, the partitions are written to files named INPUT.parts/{01..K}
+
+  SYNOPSIS:
+
+    kfold split -i INPUT [options]
+
+  EXAMPLES:
+	
+    # Split the file sample.txt into 4 parts
+    kfold split -k4 sample.txt
+	
+    # Split the double-newline-delimited file sample.conll into 10 parts
+    kfold split -d"\n\n" sample.conll
+	
+  OPTIONS:
+	
+    -i, --input FILE 
+        Data file to split
+	
+    -k, --parts N 
+        The number of partitions desired
+	
+    -d, --delimiter DELIM 
+        String used to separate individual entries (newline per default)
+	
+    -g, --granularity N 
+        Ensure the number of entries in each partition is divisible by N (useful for block-structured data)
+	
+    -f, --overwrite 
+        Remove existing parts prior to executing
+	
+    --fold 
+        Additionally, create K folds of K-1 parts in a another folder
+	
+    --parts-name STRING 
+        Use the given name as suffix for the partitions folder created
+	
+    --folds-name STRING 
+        Use the given name as suffix for the folds folder created
+
+=== Training on the folds
+
+  NAME:
+
+    train
+
+  DESCRIPTION:
+
+    Given training data previously split in K parts and folds, train K models on the K folds
+    
+    Certain keywords in the training command and its arguments are interpolated at runtime:
+
+     * %N  - fold number, e.g. '01'
+     * %F  - fold filename, e.g. 'brown.train/01'
+     * %I  - alias for %F
+     * %M  - model filename, e.g. 'brown.models/01'
+     * %B  - basename (as specified on the command line), e.g. 'brown'
+
+
+  SYNOPSIS:
+
+    kfold train --base NAME [options] -- CMD [--CMD-OPTIONS] [CMD-ARGS]
+
+  EXAMPLES:
+	
+    # Train MaltParser for cross-validation
+    kfold train -f --base shuffled.c32.conll -- java -jar ~/Tools/malt-1.4.1/malt.jar -c %B.model_%N -i %T -m learn
+	
+  OPTIONS:
+	
+    -f, --overwrite 
+        Remove existing models prior to executing
+	
+    --base NAME 
+        Default prefix of training folds and model files
+	
+    --folds-name SUFFIX 
+        Look for folds {01..K} in the folder BASE.SUFFIX
+	
+    --models-name SUFFIX 
+        Yield model names as BASE.SUFFIX/{01..K} as interpolation pattern %M
+
+=== Testing the models on their reciprocal data file parts
+
+  NAME:
+
+    test
+
+  DESCRIPTION:
+
+    Process K parts of a split datafile using K previously trained models.
+    
+    Certain keywords in the testing command and its arguments are interpolated at runtime:
+
+     * %N  - part number, e.g. '01'
+     * %T  - part filename, e.g. 'brown.test/01'
+     * %I  - alias for %T
+     * %O  - output filename, e.g. 'brown.outputs/01'
+     * %M  - model filename, e.g. 'brown.models/01'
+     * %B  - basename (as specified on the command line), e.g. 'brown'
+
+
+  SYNOPSIS:
+
+    kfold test --base NAME [options] -- CMD [--CMD-OPTIONS] [CMD-ARGS]
+
+  EXAMPLES:
+	
+    # Apply trained MaltParser models for cross-validation
+    kfold test -f --base shuffled.c32.conll -- java -jar ~/Tools/malt-1.4.1/malt.jar -c %B.model_%N -i %T -o %O -m parse
+	
+  OPTIONS:
+	
+    -f, --overwrite 
+        Remove existing test output prior to executing
+	
+    --base NAME 
+        Default prefix of model files and test outputs
+	
+    --parts-name SUFFIX 
+        Look for parts {01..K} to be processed in the folder BASE.SUFFIX
+	
+    --models-name SUFFIX 
+        Yield model names as BASE.SUFFIX/{01..K} as interpolation pattern %M
+	
+    --outputs-name SUFFIX 
+        Yield output filenames as BASE.SUFFIX/{01..K} as interpolation pattern %O
+	
+    --output-name SUFFIX 
+        Put the concatenated output of all models in BASE.SUFFIX
+

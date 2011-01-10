@@ -7,7 +7,7 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'lib'))
 require 'kfold'
 
 Echoe.new('kfold', Kfold::VERSION) do |p|
-  p.description    = "Create k-fold splits from datafiles (useful for cross-validation in supervised machine learning)"
+  p.description    = "Create K-fold splits from data files and assist in training and testing (useful for cross-validation in supervised machine learning)"
   p.url            = "http://github.com/crishoj/kfold"
   p.author         = "Christian Rishøj"
   p.email          = "christian@rishoj.net"

@@ -6,7 +6,7 @@ require 'kfold'
 require 'fileutils'
 
 program :version, Kfold::VERSION
-program :description, 'Do stuff'
+program :description, "Create K-fold splits from data files and assist in training and testing (useful for cross-validation in supervised machine learning)"
  
 def do_directory(dir, overwrite = false)
   if File.exist? dir
@@ -101,6 +101,7 @@ Given training data previously split in K parts and folds, train K models on the
      * %M  - model filename, e.g. 'brown.models/01'
      * %B  - basename (as specified on the command line), e.g. 'brown'
   end
+  c.example 'Train MaltParser for cross-validation', 'kfold train -f --base shuffled.c32.conll -- java -jar ~/Tools/malt-1.4.1/malt.jar -c %B.model_%N -i %T -m learn'
   c.option '-f', '--overwrite', 'Remove existing models prior to executing'
   c.option '--base NAME', String, 'Default prefix of training folds and model files'
   c.option '--folds-name SUFFIX', String, 'Look for folds {01..K} in the folder BASE.SUFFIX'
@@ -140,6 +141,19 @@ command :test do |c|
   c.option '--models-name SUFFIX', String, 'Yield model names as BASE.SUFFIX/{01..K} as interpolation pattern %M'
   c.option '--outputs-name SUFFIX', String, 'Yield output filenames as BASE.SUFFIX/{01..K} as interpolation pattern %O'
   c.option '--output-name SUFFIX', String, 'Put the concatenated output of all models in BASE.SUFFIX'
+  c.description = <<-end
+Process K parts of a split datafile using K previously trained models.
+    
+    Certain keywords in the testing command and its arguments are interpolated at runtime:
+
+     * %N  - part number, e.g. '01'
+     * %T  - part filename, e.g. 'brown.test/01'
+     * %I  - alias for %T
+     * %O  - output filename, e.g. 'brown.outputs/01'
+     * %M  - model filename, e.g. 'brown.models/01'
+     * %B  - basename (as specified on the command line), e.g. 'brown'
+  end
+  c.example 'Apply trained MaltParser models for cross-validation', 'kfold test -f --base shuffled.c32.conll -- java -jar ~/Tools/malt-1.4.1/malt.jar -c %B.model_%N -i %T -o %O -m parse'
   c.action do |args, options|
     options.default :parts_name => 'test', :models_name => 'models', :outputs_name => 'outputs', :output_name => 'output'
     raise "Must specify base name using --base" unless options.base
