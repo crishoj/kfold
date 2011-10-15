@@ -1,4 +1,4 @@
-
+require 'spec_helper'
 require 'kfold/data_file'
 
 describe Kfold::DataFile do

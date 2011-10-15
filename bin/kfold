@@ -1,13 +1,11 @@
 #!/usr/bin/env ruby
-
-require 'rubygems'
 require 'commander/import'
 require 'kfold'
 require 'fileutils'
 
 program :version, Kfold::VERSION
 program :description, "Create K-fold splits from data files and assist in training and testing (useful for cross-validation in supervised machine learning)"
- 
+
 def do_directory(dir, overwrite = false)
   if File.exist? dir
     if overwrite
