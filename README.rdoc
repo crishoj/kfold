@@ -14,7 +14,7 @@ learning)
 
 10-fold cross-validation of the standard MaltParser on a treebank named shuffled.c32.conll may be done as follows:
 
-  kfold split -f -i shuffled.c32.conll -d '\n\n' 
+  kfold split -f -i shuffled.c32.conll --fold -d '\n\n'
   kfold train -f --base shuffled.c32.conll -- java -jar ~/Tools/malt-1.4.1/malt.jar -c %B.model_%N -i %T -m learn
   kfold test -f --base shuffled.c32.conll -- java -jar ~/Tools/malt-1.4.1/malt.jar -c %B.model_%N -i %T -o %O -m parse
   eval07.pl -q -g shuffled.c32.conll -s shuffled.c32.conll.output
