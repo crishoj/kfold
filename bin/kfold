@@ -109,7 +109,7 @@ Given training data previously split in K parts and folds, train K models on the
     raise "Must specify base name using --base" unless options.base
     folds_dir = "#{options.base}.#{options.folds_name}"
     models_dir = "#{options.base}.#{options.models_name}"
-    raise "Folds directory not found" unless File.exists?(folds_dir)
+    raise "Folds directory '#{folds_dir}' not found" unless File.exists?(folds_dir)
     folds = Dir.glob(File.join(folds_dir, '*')).collect { |file|
       file if File.basename(file) =~ /^[0-9]+$/
     }.compact
@@ -160,7 +160,6 @@ Process K parts of a split datafile using K previously trained models.
     output_dir = "#{options.base}.#{options.outputs_name}"
     output_file = "#{options.base}.#{options.output_name}"
     raise "Parts directory not found" unless File.exists?(parts_dir)
-    raise "Model directory not found" unless File.exists?(models_dir)
     parts = Dir.glob(File.join(parts_dir, '*')).collect { |file|
       file if File.basename(file) =~ /^[0-9]+$/
     }.compact
